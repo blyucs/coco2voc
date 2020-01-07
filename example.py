@@ -31,20 +31,34 @@ def on_press(event):
 
     pass
 
+def txt2lst():
+    path = os.path.join(labels_target_folder, 'images_ids.txt')
+    image_path='rawimage'
+    label_path = 'class_labels'
+    # Read ids of images whose annotations have been converted from specified file
+    image_id_list = open(os.path.join(labels_target_folder, 'train.lst'),'w')
+    with open(path) as f:
+        id_list = [line.split()[0] for line in f]
+
+    for id in id_list:
+        str = image_path +'/'+ id + '.jpg'+'\t'+label_path+ '/' +id+'.png'+'\t' + label_path + '/' + id +'.png'
+        image_id_list.write(str+ '\n')
 
 if __name__ == '__main__':
     # !!Change paths to your local machine!!
-    annotations_file = '/home/dl/1TB-Volumn/MSCOCO2017/annotations/instances_train2017.json'
-    labels_target_folder = '/home/dl/PycharmProjects/coco2voc-master/output'
-    data_folder = '/home/dl/1TB-Volumn/MSCOCO2017/train2017'
+    annotations_file = './annotations/instances_train2014.json'
+    labels_target_folder = './output'
+    data_folder = './train2014'
 
+    path = os.path.join(labels_target_folder, 'images_ids.txt')
+    if os.path.exists(path):
+        os.remove(path)
 
     # Convert n=25 annotations
-    coco2voc(annotations_file, labels_target_folder, n=25, compress=True)
+    coco2voc(annotations_file, labels_target_folder, n=2329, compress=True)
 
     # Load an image with it's id segmentation and show
     coco = COCO(annotations_file)
-    path = os.path.join(labels_target_folder, 'images_ids.txt')
 
     # Read ids of images whose annotations have been converted from specified file
     with open(path) as f:
@@ -58,9 +72,9 @@ if __name__ == '__main__':
     s_toggle = True
     dpi = 100
 
-    for id in id_list:
+    for i,id in enumerate(id_list):
         # Get the image's file name and load image from data folder
-        img_ann = coco.loadImgs(int(id))
+        img_ann = coco.loadImgs(int(i+1))
 
         file_name = img_ann[0]['file_name']
         im_data = plt.imread(os.path.join(data_folder, file_name))
@@ -71,25 +85,29 @@ if __name__ == '__main__':
         figsizes.append(size)
 
         # Load segmentation - note that the loaded '.npz' file is a dictionary, and the data is at key 'arr_0'
-        id_seg = np.load(os.path.join(labels_target_folder, 'id_labels', id +'.npz'))
-        segs.append(id_seg['arr_0'])
-        
-        # Example for loading class or instance segmentations
-        instance_filename = os.path.join(labels_target_folder, 'instance_labels', id +'.png')
-        class_filename = os.path.join(labels_target_folder, 'class_labels', id +'.png')
-        instance_seg = np.array(Image.open(instance_filename))
-        class_seg = np.array(Image.open(class_filename))
+        #id_seg = np.load(os.path.join(labels_target_folder, 'id_labels', id +'.npz'))
+        #segs.append(id_seg['arr_0'])
 
+        # Example for loading class or instance segmentations
+        #instance_filename = os.path.join(labels_target_folder, 'instance_labels', id +'.png')
+        class_filename = os.path.join(labels_target_folder, 'class_labels', id +'.png')
+        #instance_seg = np.array(Image.open(instance_filename))
+        class_seg = np.array(Image.open(class_filename))
+        segs.append(class_seg)
 
     # Show image with segmentations
     fig, ax = plt.subplots(figsize=figsizes[0], dpi=dpi)
     fig.canvas.mpl_connect('key_press_event', on_press)
 
     fplot = ax.imshow(frames[i%l])
-    splot = ax.imshow(segs[i%l], alpha=0.4)
+    splot = ax.imshow(segs[i%l], alpha=0.4)  # X*Y*10 imshow auto expand 0-10 to specific color
+    #ax.imshow(segs[i%l+2],alpha=0.7)
 
     ax.set_aspect(aspect='auto')# must after imshow
 
     plt.tight_layout()
     plt.axis('off')
     plt.show()
+    txt2lst()
+
+

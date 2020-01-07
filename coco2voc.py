@@ -47,15 +47,22 @@ def coco2voc(anns_file, target_folder, n=None, compress=True):
 
         class_seg, instance_seg, id_seg = annsToSeg(anns, coco_instance)
 
-        Image.fromarray(class_seg).convert("L").save(class_target_path + '/' + str(img) + '.png')
-        Image.fromarray(instance_seg).convert("L").save(instance_target_path + '/' + str(img) + '.png')
-        
-        if compress:
-            np.savez_compressed(os.path.join(id_target_path, str(img)), id_seg)
-        else:
-            np.save(os.path.join(id_target_path, str(img)+'.npy'), id_seg)
+        #save one channel
+        Image.fromarray(class_seg).convert("L").save(class_target_path + '/' +str(coco_imgs[img]['file_name']).split('.')[0]  + '.png')
+        Image.fromarray(instance_seg).convert("L").save(instance_target_path + '/' + str(coco_imgs[img]['file_name']).split('.')[0] + '.png')
 
-        image_id_list.write(str(img)+'\n')
+        #save png for color
+        #class_seg = np.dstack([class_seg] * 3).astype(np.uint8)  # Stack to create an RGB image
+        #this will be four channel
+        #plt.imsave(os.path.join(class_target_path, str(coco_imgs[img]['file_name']).split('.')[0] + '.png'), class_seg, cmap=plt.get_cmap('inferno'))
+        #plt.imsave(os.path.join(instance_target_path, str(coco_imgs[img]['file_name']).split('.')[0] + '.png'), instance_seg, cmap=plt.get_cmap('inferno'))
+
+        if compress:
+            np.savez_compressed(os.path.join(id_target_path,str(coco_imgs[img]['file_name']).split('_')[0]) , id_seg)
+        else:
+            np.save(os.path.join(id_target_path, str(coco_imgs[img]['file_name']).split('.')[0] + '.npy'), id_seg)
+
+        image_id_list.write(str(coco_imgs[img]['file_name']).split('.')[0]+'\n')
 
         if i%100==0 and i>0:
             print(str(i)+" annotations processed" +
